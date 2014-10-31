@@ -4,10 +4,12 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.api.java.JavaDStream;
+import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaPairReceiverInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka.KafkaUtils;
 import scala.Tuple2;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,6 +54,16 @@ public class FilterErrors {
                 return s.contains("error");
             }
         });
+
+        // Filter out lines which are above 20 characters.
+
+        JavaPairDStream<String, String> longWordFilter = messages.filter(new Function<Tuple2<String, String>, Boolean>() {
+            @Override
+            public Boolean call(Tuple2<String, String> stringStringTuple2) throws Exception {
+                return stringStringTuple2._2().length()<20;
+            }
+        });
+        longWordFilter.print();
 
         errorDStreams.print();
         errorDStreams.count();
